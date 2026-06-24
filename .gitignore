@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.umi/
+.mock/
+.env.local
+*.log

@@ -153,15 +153,21 @@ const DetailsPage: React.FC = () => {
               <Form.Item label="Start Time" name="startTime" rules={[{ required: true }]}>
                 <Select
                   placeholder="Please select"
-                  options={TIME_SLOTS.map((t) => ({ value: t, label: t }))}
-                  disabled={disabledTime('start')}
+                  options={TIME_SLOTS.map((t) => ({
+                    value: t,
+                    label: t,
+                    disabled: disabledTime('start')(t),
+                  }))}
                 />
               </Form.Item>
               <Form.Item label="End Time" name="endTime" rules={[{ required: true }]}>
                 <Select
                   placeholder="Please select"
-                  options={TIME_SLOTS.map((t) => ({ value: t, label: t }))}
-                  disabled={disabledTime('end')}
+                  options={TIME_SLOTS.map((t) => ({
+                    value: t,
+                    label: t,
+                    disabled: disabledTime('end')(t),
+                  }))}
                 />
               </Form.Item>
               <Form.Item label="Room Title" name="title" rules={[{ required: true }]}>

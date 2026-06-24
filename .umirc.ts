@@ -16,7 +16,4 @@ export default defineConfig({
   antd: {},
   mock: {},
   npmClient: 'npm',
-  define: {
-    'process.env.NODE_ENV': 'development',
-  },
 });

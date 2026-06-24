@@ -1,4 +1,4 @@
-import { request } from 'umi';
+import { request } from '@/utils/request';
 import type { Equipment, EquipmentType } from '@/types';
 
 export interface ListEquipmentParams {

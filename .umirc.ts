@@ -12,8 +12,6 @@ export default defineConfig({
     { path: '/my-reservation', component: 'my-reservation/index' },
     { path: '*', component: '404' },
   ],
-  layout: { name: 'BasicLayout', locale: false },
-  antd: {},
   mock: {},
   npmClient: 'npm',
 });

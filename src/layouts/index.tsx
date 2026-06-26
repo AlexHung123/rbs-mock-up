@@ -1,30 +1,24 @@
-import React from 'react';
-import { Layout, Menu, Button } from 'antd';
-import {
-  CalendarOutlined,
-  EditOutlined,
-  ToolOutlined,
-  SettingOutlined,
-  CloseOutlined,
-} from '@ant-design/icons';
-import { Outlet, useLocation, history } from 'umi';
+import React from 'react'
+import { Layout, Menu, Button } from 'antd'
+import { CalendarOutlined, EditOutlined, ToolOutlined, SettingOutlined, CloseOutlined } from '@ant-design/icons'
+import { Outlet, useLocation, history } from 'umi'
 
-const { Header, Content } = Layout;
+const { Header, Content } = Layout
 
 const BOOKING_SUB_ROUTES = [
   { key: '/booking/room', label: 'Make Reservation' },
-  { key: '/booking/list', label: 'Room Booking View' },
-];
+  { key: '/booking/list', label: 'Room Booking View' }
+]
 
 const BasicLayout: React.FC = () => {
-  const location = useLocation();
+  const location = useLocation()
 
-  const isBookingArea = location.pathname.startsWith('/booking');
-  const isMyReservation = location.pathname.startsWith('/my-reservation');
+  const isBookingArea = location.pathname.startsWith('/booking')
+  const isMyReservation = location.pathname.startsWith('/my-reservation')
 
-  const activeTopKey = isMyReservation ? '/my-reservation' : isBookingArea ? '/booking' : '';
+  const activeTopKey = isMyReservation ? '/my-reservation' : isBookingArea ? '/booking' : ''
 
-  const activeSubKey = BOOKING_SUB_ROUTES.find((r) => location.pathname.startsWith(r.key))?.key;
+  const activeSubKey = BOOKING_SUB_ROUTES.find(r => location.pathname.startsWith(r.key))?.key
 
   return (
     <Layout style={{ minHeight: '100vh', background: '#f5f5f5' }}>
@@ -35,7 +29,7 @@ const BasicLayout: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid #f0f0f0',
+          borderBottom: '1px solid #f0f0f0'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -44,7 +38,7 @@ const BasicLayout: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               marginRight: 48,
-              fontWeight: 600,
+              fontWeight: 600
             }}
           >
             <div
@@ -57,7 +51,7 @@ const BasicLayout: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginRight: 8,
+                marginRight: 8
               }}
             >
               <CalendarOutlined />
@@ -69,8 +63,8 @@ const BasicLayout: React.FC = () => {
             selectedKeys={[activeTopKey]}
             style={{ borderBottom: 'none', flex: 1 }}
             onClick={({ key }) => {
-              if (key === '/my-reservation') history.push('/my-reservation');
-              if (key === '/booking') history.push('/booking/room');
+              if (key === '/my-reservation') history.push('/my-reservation')
+              if (key === '/booking') history.push('/booking/room')
             }}
             items={[
               {
@@ -85,30 +79,30 @@ const BasicLayout: React.FC = () => {
                         height: 6,
                         borderRadius: '50%',
                         background: '#ff4d4f',
-                        marginLeft: 4,
+                        marginLeft: 4
                       }}
                     />
                   </span>
                 ),
-                label: 'My Reservation',
+                label: 'My Reservation'
               },
               {
                 key: '/booking',
                 icon: <EditOutlined />,
-                label: 'Booking',
+                label: 'Booking'
               },
               {
                 key: '/management',
                 icon: <ToolOutlined />,
                 label: 'Management',
-                disabled: true,
+                disabled: true
               },
               {
                 key: '/system',
                 icon: <SettingOutlined />,
                 label: 'System',
-                disabled: true,
-              },
+                disabled: true
+              }
             ]}
           />
         </div>
@@ -120,7 +114,7 @@ const BasicLayout: React.FC = () => {
           style={{
             background: '#fff',
             padding: '0 24px',
-            borderBottom: '1px solid #f0f0f0',
+            borderBottom: '1px solid #f0f0f0'
           }}
         >
           <Menu
@@ -128,7 +122,7 @@ const BasicLayout: React.FC = () => {
             selectedKeys={[activeSubKey || '']}
             style={{ borderBottom: 'none' }}
             onClick={({ key }) => history.push(key)}
-            items={BOOKING_SUB_ROUTES.map((r) => ({ key: r.key, label: r.label }))}
+            items={BOOKING_SUB_ROUTES.map(r => ({ key: r.key, label: r.label }))}
           />
         </div>
       )}
@@ -139,14 +133,14 @@ const BasicLayout: React.FC = () => {
             background: '#fff',
             borderRadius: 8,
             padding: 24,
-            minHeight: 'calc(100vh - 200px)',
+            minHeight: 'calc(100vh - 200px)'
           }}
         >
           <Outlet />
         </div>
       </Content>
     </Layout>
-  );
-};
+  )
+}
 
-export default BasicLayout;
+export default BasicLayout

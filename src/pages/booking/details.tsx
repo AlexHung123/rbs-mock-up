@@ -1,272 +1,350 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Card,
-  Typography,
-  Form,
-  Select,
-  Input,
-  Button,
-  Row,
-  Col,
-  Space,
-  message,
-} from 'antd';
-import { Link, history } from 'umi';
-import dayjs from 'dayjs';
-import BookingSteps from '@/components/BookingSteps';
-import DayTimeline from '@/components/DayTimeline';
-import { getRoom } from '@/services/room';
-import { listEquipment } from '@/services/equipment';
-import { useBookingDraft } from '@/hooks/useBookingDraft';
-import type { Equipment, RoomWithSlots, TimeSlot } from '@/types';
+import React, { useEffect, useMemo, useState } from 'react'
+import { Card, Typography, Form, Select, Input, Button, Row, Col, Space, message, Divider } from 'antd'
+import { Link, useNavigate } from 'umi'
+import dayjs from 'dayjs'
+import BookingSteps from '@/components/BookingSteps'
+import TimeSlotCalendar from '@/components/TimeSlotCalendar'
+import { getRoom } from '@/services/room'
+import { listEquipment } from '@/services/equipment'
+import { useBookingDraft } from '@/hooks/useBookingDraft'
+import type { Equipment, RoomWithSlots } from '@/types'
 
-const { Title, Text } = Typography;
+const { Text } = Typography
 
 const TIME_SLOTS = [
-  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
-  '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
-  '17:00', '17:30',
-];
-
-function timeToMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
-}
+  '09:00',
+  '09:30',
+  '10:00',
+  '10:30',
+  '11:00',
+  '11:30',
+  '12:00',
+  '12:30',
+  '13:00',
+  '13:30',
+  '14:00',
+  '14:30',
+  '15:00',
+  '15:30',
+  '16:00',
+  '16:30',
+  '17:00',
+  '17:30',
+  '18:00'
+]
 
 const DetailsPage: React.FC = () => {
-  const { draft, setDraft } = useBookingDraft();
-  const [form] = Form.useForm();
-  const [room, setRoom] = useState<RoomWithSlots | null>(null);
-  const [equipment, setEquipment] = useState<Equipment[]>([]);
-  const [bookedSlots, setBookedSlots] = useState<TimeSlot[]>([]);
+  const { draft, setDraft } = useBookingDraft()
+  const navigate = useNavigate()
+  const [form] = Form.useForm()
+
+  const [room, setRoom] = useState<RoomWithSlots | null>(null)
+  const [equipment, setEquipment] = useState<Equipment[]>([])
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!draft.selectedRoomId) {
-      history.replace('/booking/room');
-      return;
+      navigate('/booking/room', { replace: true })
+      return
     }
-    getRoom(draft.selectedRoomId, draft.selectedDate).then((r) => {
-      setRoom(r);
-      setBookedSlots(r.bookedSlots);
-    });
-    listEquipment().then(setEquipment);
-    form.setFieldsValue({
-      startTime: draft.startTime,
-      endTime: draft.endTime,
-      title: draft.title,
-      remarks: draft.remarks,
-    });
-  }, [draft.selectedRoomId, draft.selectedDate, form]);
 
-  const disabledTime = (kind: 'start' | 'end') => {
-    return (time: string) => {
-      if (kind === 'start') {
-        return bookedSlots.some(
-          (s) =>
-            timeToMinutes(time) >= timeToMinutes(s.startTime) &&
-            timeToMinutes(time) < timeToMinutes(s.endTime),
-        );
-      } else {
-        const startVal = form.getFieldValue('startTime');
-        if (!startVal) return false;
-        if (timeToMinutes(time) <= timeToMinutes(startVal)) return true;
-        return bookedSlots.some(
-          (s) =>
-            timeToMinutes(time) > timeToMinutes(s.startTime) &&
-            timeToMinutes(time) <= timeToMinutes(s.endTime),
-        );
+    let mounted = true
+
+    const init = async () => {
+      try {
+        setLoading(true)
+
+        const [roomRes, equipmentRes] = await Promise.all([getRoom(draft.selectedRoomId, draft.selectedDate), listEquipment()])
+
+        if (!mounted) return
+
+        setRoom(roomRes)
+        setEquipment(equipmentRes)
+
+        form.setFieldsValue({
+          startTime: draft.startTime,
+          endTime: draft.endTime,
+          title: draft.title,
+          remarks: draft.remarks
+        })
+      } catch (error) {
+        message.error('Failed to load booking details')
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
       }
-    };
-  };
+    }
 
-  const onValuesChange = (_: any, all: any) => {
+    init()
+
+    return () => {
+      mounted = false
+    }
+  }, [draft.selectedRoomId, draft.selectedDate, draft.startTime, draft.endTime, draft.title, draft.remarks, form, navigate])
+
+  const equipmentByType = useMemo(() => {
+    const map: Record<string, Equipment[]> = {}
+
+    equipment.forEach(item => {
+      if (!map[item.type]) {
+        map[item.type] = []
+      }
+      map[item.type].push(item)
+    })
+
+    return map
+  }, [equipment])
+
+  const onValuesChange = (_changedValues: any, allValues: any) => {
     setDraft({
-      startTime: all.startTime,
-      endTime: all.endTime,
-      title: all.title,
-      remarks: all.remarks,
-    });
-  };
+      startTime: allValues.startTime,
+      endTime: allValues.endTime,
+      title: allValues.title,
+      remarks: allValues.remarks
+    })
+  }
+
+  const handleTimeChange = async (range?: { startTime: string; endTime: string }) => {
+    form.setFieldsValue({
+      startTime: range?.startTime,
+      endTime: range?.endTime
+    })
+
+    setDraft({
+      startTime: range?.startTime,
+      endTime: range?.endTime
+    })
+
+    try {
+      await form.validateFields(['startTime', 'endTime'])
+    } catch (error) {
+      // ignore validation throw, UI will display message automatically
+    }
+  }
 
   const handleNext = async () => {
     try {
-      const values = await form.validateFields();
+      const values = await form.validateFields()
+
       setDraft({
-        startTime: values.startTime,
-        endTime: values.endTime,
         title: values.title,
-        remarks: values.remarks,
-      });
-      history.push('/booking/confirm');
-    } catch {
-      message.error('Please complete required fields');
+        remarks: values.remarks
+      })
+
+      navigate('/booking/confirm')
+    } catch (error) {
+      message.error('Please complete required fields')
     }
-  };
+  }
 
-  const equipmentByType = useMemo(() => {
-    const map: Record<string, Equipment[]> = {};
-    equipment.forEach((e) => {
-      if (!map[e.type]) map[e.type] = [];
-      map[e.type].push(e);
-    });
-    return map;
-  }, [equipment]);
+  const handleResetEquipment = () => {
+    setDraft({
+      equipmentSelections: []
+    })
+  }
 
-  if (!room) return null;
+  const handleAddEquipmentRow = () => {
+    setDraft({
+      equipmentSelections: [...draft.equipmentSelections, { type: '', equipmentId: '' }]
+    })
+  }
+
+  if (!room) {
+    return null
+  }
 
   return (
     <div>
       <BookingSteps current={1} />
 
-      <Row gutter={16}>
-        {/* Left: Room summary */}
-        <Col xs={24} lg={6}>
-          <Card
-            cover={
+      <Row gutter={[16, 16]}>
+        {/* Left: Room summary + form */}
+        <Col xs={24} xl={12}>
+          <Card style={{ marginBottom: 16 }} bodyStyle={{ padding: 16 }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '180px 1fr',
+                gap: 16,
+                alignItems: 'start'
+              }}
+            >
               <div
                 style={{
-                  height: 160,
-                  background: `url(${room.image}) center/cover`,
+                  height: 140,
+                  borderRadius: 8,
+                  background: `url(${room.image}) center/cover`
                 }}
               />
-            }
-          >
-            <Card.Meta
-              title={room.name}
-              description={
-                <Space direction="vertical" size={4}>
-                  <Text type="secondary">{room.floor}</Text>
-                  <Text type="secondary">{room.capacity} Capacity</Text>
-                </Space>
-              }
-            />
-            <div style={{ textAlign: 'right', marginTop: 8 }}>
-              <Link>How to go</Link>
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    gap: 12
+                  }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 20,
+                        fontWeight: 600,
+                        lineHeight: '28px',
+                        marginBottom: 8
+                      }}
+                    >
+                      {room.name}
+                    </div>
+
+                    <Space direction="vertical" size={4}>
+                      <Text type="secondary">{room.floor}</Text>
+                      <Text type="secondary">{room.capacity} Capacity</Text>
+                    </Space>
+                  </div>
+
+                  <Link to="/booking/room">Change room</Link>
+                </div>
+
+                <div style={{ marginTop: 20, textAlign: 'right' }}>
+                  <Link to="/map">How to go</Link>
+                </div>
+              </div>
             </div>
           </Card>
-        </Col>
 
-        {/* Middle: Form */}
-        <Col xs={24} lg={12}>
-          <Card title="Booking Details" style={{ marginBottom: 16 }}>
+          <Card title="Booking Details" loading={loading} style={{ marginBottom: 16 }}>
             <Form layout="vertical" form={form} onValuesChange={onValuesChange}>
-              <Form.Item label="Start Time" name="startTime" rules={[{ required: true }]}>
-                <Select
-                  placeholder="Please select"
-                  options={TIME_SLOTS.map((t) => ({
-                    value: t,
-                    label: t,
-                    disabled: disabledTime('start')(t),
-                  }))}
-                />
-              </Form.Item>
-              <Form.Item label="End Time" name="endTime" rules={[{ required: true }]}>
-                <Select
-                  placeholder="Please select"
-                  options={TIME_SLOTS.map((t) => ({
-                    value: t,
-                    label: t,
-                    disabled: disabledTime('end')(t),
-                  }))}
-                />
-              </Form.Item>
-              <Form.Item label="Room Title" name="title" rules={[{ required: true }]}>
+              <Form.Item label="Room Title" name="title" rules={[{ required: true, message: 'Please enter room title' }]}>
                 <Input.TextArea rows={3} placeholder="Please enter" />
               </Form.Item>
+
               <Form.Item label="Remarks" name="remarks">
-                <Input.TextArea rows={3} placeholder="Please enter" />
+                <Input.TextArea rows={4} placeholder="Please enter" />
               </Form.Item>
             </Form>
           </Card>
 
-          <Card title="Room Equipment">
+          <Card title="Room Equipment" loading={loading}>
             <Text strong>Fixed Equipment:</Text>
-            <ul style={{ marginTop: 4 }}>
-              {room.fixedEquipment.map((eq) => (
-                <li key={eq}>{eq}</li>
+            <ul style={{ marginTop: 8, paddingLeft: 18, marginBottom: 16 }}>
+              {room.fixedEquipment.map(item => (
+                <li key={item} style={{ marginBottom: 4 }}>
+                  {item}
+                </li>
               ))}
             </ul>
+
+            <Divider style={{ margin: '12px 0' }} />
+
+            <Text strong>Equipment Request:</Text>
+
             <div style={{ marginTop: 12 }}>
-              <Text strong>Equipment Request:</Text>
-              <div style={{ marginTop: 8 }}>
-                {draft.equipmentSelections.map((sel, idx) => (
-                  <Row gutter={8} key={idx} style={{ marginBottom: 8 }}>
-                    <Col span={8}>
-                      <Select
-                        value={sel.type}
-                        style={{ width: '100%' }}
-                        options={Object.keys(equipmentByType).map((t) => ({ value: t, label: t }))}
-                        onChange={(v) => {
-                          const next = [...draft.equipmentSelections];
-                          next[idx] = { type: v, equipmentId: '' };
-                          setDraft({ equipmentSelections: next });
-                        }}
-                        placeholder="Please select"
-                      />
-                    </Col>
-                    <Col span={16}>
-                      <Select
-                        value={sel.equipmentId || undefined}
-                        style={{ width: '100%' }}
-                        options={(equipmentByType[sel.type] || []).map((e) => ({
-                          value: e.id,
-                          label: e.name,
-                        }))}
-                        onChange={(v) => {
-                          const next = [...draft.equipmentSelections];
-                          next[idx] = { type: sel.type, equipmentId: v };
-                          setDraft({ equipmentSelections: next });
-                        }}
-                        placeholder="Please select"
-                      />
-                    </Col>
-                  </Row>
-                ))}
-                <Space>
-                  <Button onClick={() => setDraft({ equipmentSelections: [] })}>Reset</Button>
-                  <Button
-                    type="link"
-                    onClick={() =>
-                      setDraft({
-                        equipmentSelections: [
-                          ...draft.equipmentSelections,
-                          { type: 'Notebook', equipmentId: '' },
-                        ],
-                      })
-                    }
-                  >
-                    + Add Row
-                  </Button>
-                </Space>
-              </div>
+              {draft.equipmentSelections.length === 0 ? (
+                <div style={{ marginBottom: 12 }}>
+                  <Text type="secondary">No additional equipment selected</Text>
+                </div>
+              ) : null}
+
+              {draft.equipmentSelections.map((selection, index) => (
+                <Row gutter={8} key={index} style={{ marginBottom: 8 }}>
+                  <Col span={8}>
+                    <Select
+                      value={selection.type || undefined}
+                      style={{ width: '100%' }}
+                      placeholder="Please select"
+                      options={Object.keys(equipmentByType).map(type => ({
+                        value: type,
+                        label: type
+                      }))}
+                      onChange={value => {
+                        const next = [...draft.equipmentSelections]
+                        next[index] = {
+                          type: value,
+                          equipmentId: ''
+                        }
+
+                        setDraft({
+                          equipmentSelections: next
+                        })
+                      }}
+                    />
+                  </Col>
+
+                  <Col span={16}>
+                    <Select
+                      value={selection.equipmentId || undefined}
+                      style={{ width: '100%' }}
+                      placeholder="Please select"
+                      options={(equipmentByType[selection.type] || []).map(item => ({
+                        value: item.id,
+                        label: item.name
+                      }))}
+                      onChange={value => {
+                        const next = [...draft.equipmentSelections]
+                        next[index] = {
+                          type: selection.type,
+                          equipmentId: value
+                        }
+
+                        setDraft({
+                          equipmentSelections: next
+                        })
+                      }}
+                      disabled={!selection.type}
+                    />
+                  </Col>
+                </Row>
+              ))}
+
+              <Space>
+                <Button onClick={handleResetEquipment}>Reset</Button>
+                <Button type="link" onClick={handleAddEquipmentRow}>
+                  + Add Row
+                </Button>
+              </Space>
             </div>
           </Card>
         </Col>
 
-        {/* Right: Timeline */}
-        <Col xs={24} lg={6}>
-          <Card title={dayjs(draft.selectedDate).format('dddd, DD MMMM YYYY')}>
-            <DayTimeline
-              bookedSlots={bookedSlots}
-              highlight={
+        {/* Right: calendar view */}
+        <Col xs={24} xl={12}>
+          <Card title={dayjs(draft.selectedDate).format('dddd, DD MMMM YYYY')} loading={loading} bodyStyle={{ padding: 0 }}>
+            <TimeSlotCalendar
+              date={draft.selectedDate}
+              slots={TIME_SLOTS}
+              bookedSlots={room.bookedSlots}
+              value={
                 draft.startTime && draft.endTime
-                  ? { startTime: draft.startTime, endTime: draft.endTime }
+                  ? {
+                      startTime: draft.startTime,
+                      endTime: draft.endTime
+                    }
                   : undefined
               }
-              date={draft.selectedDate}
+              onChange={handleTimeChange}
+              minTime="09:00"
+              maxTime="18:00"
             />
           </Card>
         </Col>
       </Row>
 
-      <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between' }}>
-        <Button onClick={() => history.push('/booking/room')}>Back</Button>
+      <div
+        style={{
+          marginTop: 24,
+          display: 'flex',
+          justifyContent: 'space-between'
+        }}
+      >
+        <Button onClick={() => navigate('/booking/room')}>Back</Button>
         <Button type="primary" onClick={handleNext}>
           Next
         </Button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default DetailsPage;
+export default DetailsPage

@@ -1,8 +1,11 @@
 import React from 'react';
+import { Outlet } from 'umi';
 import { BookingProvider } from '@/context/BookingContext';
 
-const BookingFlow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <BookingProvider>{children}</BookingProvider>
+const BookingFlow: React.FC = () => (
+  <BookingProvider>
+    <Outlet />
+  </BookingProvider>
 );
 
 export default BookingFlow;

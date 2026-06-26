@@ -300,132 +300,132 @@ const ListPage: React.FC = () => {
         padding: 24
       }}
     >
-      <div style={{ maxWidth: 1120, margin: '0 auto' }}>
-        <Title level={3} style={{ marginTop: 0, marginBottom: 20 }}>
-          Booking
-        </Title>
+      {/* <div style={{ maxWidth: 1120, margin: '0 auto' }}> */}
+      <Title level={3} style={{ marginTop: 0, marginBottom: 20 }}>
+        Booking
+      </Title>
 
+      <div
+        style={{
+          background: '#fff',
+          borderRadius: 8,
+          padding: 16,
+          marginBottom: 10,
+          border: '1px solid #f0f0f0'
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexWrap: 'wrap'
+          }}
+        >
+          <Button type="primary" size="small" onClick={handleToday} style={{ fontWeight: 600 }}>
+            Today
+          </Button>
+
+          <Button size="small" icon={<LeftOutlined />} onClick={handlePrevDay} />
+          <DatePicker
+            value={date}
+            onChange={d => d && setDate(d)}
+            format="dddd, D MMMM YYYY"
+            allowClear={false}
+            suffixIcon={<CalendarOutlined />}
+            size="small"
+            style={{ width: 190 }}
+          />
+          <Button size="small" icon={<RightOutlined />} onClick={handleNextDay} />
+
+          <Select
+            value={roomType}
+            onChange={setRoomType}
+            size="small"
+            style={{ width: 140 }}
+            options={[{ value: 'Classroom', label: 'Classroom' }]}
+          />
+
+          <Select value={floor} onChange={setFloor} size="small" style={{ width: 70 }} options={[{ value: '3F', label: '3F' }]} />
+
+          <Select
+            value={roomId}
+            onChange={setRoomId}
+            placeholder="Room"
+            allowClear
+            size="small"
+            style={{ width: 130 }}
+            options={roomOptions}
+          />
+
+          <Button type="primary" size="small" icon={<SearchOutlined />} onClick={fetchData} />
+        </div>
+      </div>
+
+      {loading ? (
         <div
           style={{
             background: '#fff',
             borderRadius: 8,
-            padding: 16,
-            marginBottom: 10,
-            border: '1px solid #f0f0f0'
+            padding: 40,
+            textAlign: 'center'
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              flexWrap: 'wrap'
-            }}
-          >
-            <Button type="primary" size="small" onClick={handleToday} style={{ fontWeight: 600 }}>
-              Today
-            </Button>
-
-            <Button size="small" icon={<LeftOutlined />} onClick={handlePrevDay} />
-            <DatePicker
-              value={date}
-              onChange={d => d && setDate(d)}
-              format="dddd, D MMMM YYYY"
-              allowClear={false}
-              suffixIcon={<CalendarOutlined />}
-              size="small"
-              style={{ width: 190 }}
-            />
-            <Button size="small" icon={<RightOutlined />} onClick={handleNextDay} />
-
-            <Select
-              value={roomType}
-              onChange={setRoomType}
-              size="small"
-              style={{ width: 140 }}
-              options={[{ value: 'Classroom', label: 'Classroom' }]}
-            />
-
-            <Select value={floor} onChange={setFloor} size="small" style={{ width: 70 }} options={[{ value: '3F', label: '3F' }]} />
-
-            <Select
-              value={roomId}
-              onChange={setRoomId}
-              placeholder="Room"
-              allowClear
-              size="small"
-              style={{ width: 130 }}
-              options={roomOptions}
-            />
-
-            <Button type="primary" size="small" icon={<SearchOutlined />} onClick={fetchData} />
-          </div>
+          <Spin />
         </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {filteredRooms.map(room => {
+            const roomBookings = bookings.filter(b => b.roomId === room.id)
 
-        {loading ? (
-          <div
-            style={{
-              background: '#fff',
-              borderRadius: 8,
-              padding: 40,
-              textAlign: 'center'
-            }}
-          >
-            <Spin />
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {filteredRooms.map(room => {
-              const roomBookings = bookings.filter(b => b.roomId === room.id)
+            return (
+              <div
+                key={room.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  background: '#fff',
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  border: '1px solid #ececec'
+                }}
+              >
+                <RoomInfoCard room={room} />
 
-              return (
                 <div
-                  key={room.id}
                   style={{
+                    width: 18,
+                    background: '#1f78ff',
                     display: 'flex',
-                    alignItems: 'stretch',
-                    background: '#fff',
-                    borderRadius: 8,
-                    overflow: 'hidden',
-                    border: '1px solid #ececec'
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff'
                   }}
                 >
-                  <RoomInfoCard room={room} />
-
-                  <div
-                    style={{
-                      width: 18,
-                      background: '#1f78ff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#fff'
-                    }}
-                  >
-                    <LeftOutlined />
-                  </div>
-
-                  <TimelineGrid bookings={roomBookings} onBookingClick={handleBookingClick} />
-
-                  <div
-                    style={{
-                      width: 18,
-                      background: '#1f78ff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#fff'
-                    }}
-                  >
-                    <RightOutlined />
-                  </div>
+                  <LeftOutlined />
                 </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
+
+                <TimelineGrid bookings={roomBookings} onBookingClick={handleBookingClick} />
+
+                <div
+                  style={{
+                    width: 18,
+                    background: '#1f78ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff'
+                  }}
+                >
+                  <RightOutlined />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
+    // </div>
   )
 }
 

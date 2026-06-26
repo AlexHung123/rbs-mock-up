@@ -13,6 +13,7 @@ import { ProTable } from '@ant-design/pro-components';
 import type { ProColumns } from '@ant-design/pro-components';
 import { listMyBookings } from '@/services/booking';
 import type { Booking, BookingStatus } from '@/types';
+import CalendarView from '@/components/CalendarView';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -27,6 +28,7 @@ const STATUS_COLOR: Record<BookingStatus, string> = {
 
 const MyReservationPage: React.FC = () => {
   const [status, setStatus] = useState<BookingStatus | undefined>();
+  const [activeTab, setActiveTab] = useState('agenda');
 
   const columns: ProColumns<Booking>[] = [
     { title: 'ID', dataIndex: 'id', width: 100 },
@@ -83,7 +85,8 @@ const MyReservationPage: React.FC = () => {
       </Title>
 
       <Tabs
-        activeKey="agenda"
+        activeKey={activeTab}
+        onChange={setActiveTab}
         items={[
           {
             key: 'message',
@@ -96,60 +99,64 @@ const MyReservationPage: React.FC = () => {
             children: <div>No messages</div>,
           },
           { key: 'agenda', label: 'Bookings Agenda' },
-          { key: 'calendar', label: 'Calendar', disabled: true },
+          { key: 'calendar', label: 'Calendar', children: <CalendarView /> },
           { key: 'history', label: 'History', disabled: true },
         ]}
       />
 
-      <div
-        style={{
-          background: '#fafafa',
-          padding: 16,
-          borderRadius: 8,
-          marginBottom: 16,
-        }}
-      >
-        <Space wrap>
-          <Input placeholder="Please enter" style={{ width: 180 }} prefix="ID :" />
-          <span>Date :</span>
-          <RangePicker />
-          <span>Status :</span>
-          <Select
-            placeholder="Please select"
-            value={status}
-            onChange={setStatus}
-            allowClear
-            style={{ width: 180 }}
-            options={[
-              { value: 'pending', label: 'Pending' },
-              { value: 'approved', label: 'Approved' },
-              { value: 'rejected', label: 'Rejected' },
-              { value: 'revoked', label: 'Revoked' },
-              { value: 'waitlisted', label: 'Wait listed' },
-            ]}
-          />
-          <Button>Reset</Button>
-          <Button type="primary">Search</Button>
-          <Button type="text">Collapse</Button>
-        </Space>
-      </div>
+      {activeTab === 'agenda' && (
+        <>
+          <div
+            style={{
+              background: '#fafafa',
+              padding: 16,
+              borderRadius: 8,
+              marginBottom: 16,
+            }}
+          >
+            <Space wrap>
+              <Input placeholder="Please enter" style={{ width: 180 }} prefix="ID :" />
+              <span>Date :</span>
+              <RangePicker />
+              <span>Status :</span>
+              <Select
+                placeholder="Please select"
+                value={status}
+                onChange={setStatus}
+                allowClear
+                style={{ width: 180 }}
+                options={[
+                  { value: 'pending', label: 'Pending' },
+                  { value: 'approved', label: 'Approved' },
+                  { value: 'rejected', label: 'Rejected' },
+                  { value: 'revoked', label: 'Revoked' },
+                  { value: 'waitlisted', label: 'Wait listed' },
+                ]}
+              />
+              <Button>Reset</Button>
+              <Button type="primary">Search</Button>
+              <Button type="text">Collapse</Button>
+            </Space>
+          </div>
 
-      <ProTable<Booking>
-        headerTitle="Booking Reservation"
-        rowKey="id"
-        columns={columns}
-        request={async () => {
-          const data = await listMyBookings({ status });
-          return {
-            data,
-            success: true,
-            total: data.length,
-          };
-        }}
-        pagination={{ pageSize: 10 }}
-        search={false}
-        options={{ reload: true, density: true, setting: true }}
-      />
+          <ProTable<Booking>
+            headerTitle="Booking Reservation"
+            rowKey="id"
+            columns={columns}
+            request={async () => {
+              const data = await listMyBookings({ status });
+              return {
+                data,
+                success: true,
+                total: data.length,
+              };
+            }}
+            pagination={{ pageSize: 10 }}
+            search={false}
+            options={{ reload: true, density: true, setting: true }}
+          />
+        </>
+      )}
     </div>
   );
 };
